@@ -130,3 +130,77 @@ An interrupt has occurred. Total number: 7
 An interrupt has occurred. Total number: 8
 An interrupt has occurred. Total number: 9
 ```
+
+## Extra: Filtrado pulsador
+
+Como ejercicio complementario, en este codigo se describe una interrupción que se encarga de filtrar la activación de un pulsador.
+
+Concretamente, durante intervalos de 10 milisegundos se revisa la situación del pulsador, en caso de dos cambios de estado consecutivos a voltaje alto, se activa una orden, que posteriormente, en el bucle principal, activiará un pequeña parte del codigo.
+
+Cada cambio se define como la operacion XOR de del valor actual y del anterior, en caso que se detecte un cambio de estado, el cambio será cierto.
+
+El cambio de estado actual se guarda en la variable "cama" que almacena el valor anterior de cambio de estado. Si en la siguiente iteración se detecta otro cambio de estado, se actualiza la orden a valor alto.
+```c
+#include <Arduino.h>
+
+volatile int interruptCounter;
+int totalInterruptCounter;
+hw_timer_t * timer = NULL;
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
+bool IN,vact,vant = 0,cama = 0,cam,orden = 0;
+
+void IRAM_ATTR onTimer()
+{
+    portENTER_CRITICAL_ISR(&timerMux);
+    interruptCounter++;
+    portEXIT_CRITICAL_ISR(&timerMux);
+    
+    
+    //Filter
+
+    vact = digitalRead(4);
+
+    cam = vant ^ vact;
+
+    if (cam == 1 && cama == 1)
+    {
+      IN = digitalRead(18);
+      vant = vact;
+      orden = 1;
+      cama = 0;
+      digitalWrite(18,vact);
+      return;
+    }
+    cama = cam;
+}
+
+void setup() 
+{
+    Serial.begin(115200);
+    timer = timerBegin(0, 80, true);
+    timerAttachInterrupt(timer, &onTimer, true);
+    timerAlarmWrite(timer, 10000, true);
+    timerAlarmEnable(timer);
+    pinMode(18,OUTPUT);
+    pinMode(4,INPUT_PULLUP);
+}
+
+void loop() 
+{
+    if (interruptCounter > 0)
+    {
+        portENTER_CRITICAL(&timerMux);
+        interruptCounter--;
+        portEXIT_CRITICAL(&timerMux);
+        totalInterruptCounter++;
+        
+        //Serial.print("An interrupt has occurred. Total number: ");
+        //Serial.println(totalInterruptCounter);
+        if (orden)
+        {
+          Serial.println("boton!");
+          orden = 0;
+        }
+    }
+}
+```
