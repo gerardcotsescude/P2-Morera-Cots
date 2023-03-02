@@ -63,9 +63,12 @@ Button 1 has been pressed 2 times
 Button 1 has been pressed 3 times
 Button 1 has been pressed 4 times
 Button 1 has been pressed 5 times
-Button 1 has been pressed 6 times
+...
+Button 1 has been pressed 1606 times
 Interrupt Detached!
 ```
+
+Debido a que el en laboratorio no disponiamos de pulsadores, hemos simulado el puslador usando un cortocircuito, con lo cual aparecen rebotes, disparando el numero de veces que se presiona el pulsador.
 
 ## Interrupción por Timer
 
