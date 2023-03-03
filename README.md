@@ -66,11 +66,11 @@ Button 1 has been pressed 3 times
 Button 1 has been pressed 4 times
 Button 1 has been pressed 5 times
 ...
-Button 1 has been pressed 1606 times
+Button 1 has been pressed 2606 times
 Interrupt Detached!
 ```
 
-Debido a que el en laboratorio no disponiamos de pulsadores, hemos simulado el puslador usando un cortocircuito, con lo cual aparecen rebotes, disparando el numero de veces que se presiona el pulsador.
+( Debido a que el en laboratorio no disponiamos de pulsadores, hemos simulado el puslador usando un cortocircuito, con lo cual aparecen rebotes, disparando el numero de veces que se presiona el pulsador. )
 
 ## Interrupción por Timer
 
@@ -129,78 +129,85 @@ An interrupt has occurred. Total number: 6
 An interrupt has occurred. Total number: 7
 An interrupt has occurred. Total number: 8
 An interrupt has occurred. Total number: 9
+...
 ```
 
 ## Extra: Filtrado pulsador
 
-Como ejercicio complementario, en este codigo se describe una interrupción que se encarga de filtrar la activación de un pulsador.
+Como ejercicio complementario, en este codigo se describe una interrupción por timer que se encarga de filtrar la activación de un pulsador.
 
 Concretamente, durante intervalos de 10 milisegundos se revisa la situación del pulsador, en caso de dos cambios de estado consecutivos a voltaje alto, se activa una orden, que posteriormente, en el bucle principal, activiará un pequeña parte del codigo.
 
 Cada cambio se define como la operacion XOR de del valor actual y del anterior, en caso que se detecte un cambio de estado, el cambio será cierto.
 
 El cambio de estado actual se guarda en la variable "cama" que almacena el valor anterior de cambio de estado. Si en la siguiente iteración se detecta otro cambio de estado, se actualiza la orden a valor alto.
+
 ```c
 #include <Arduino.h>
 
+//Declaracion de variables para el timer
 volatile int interruptCounter;
 int totalInterruptCounter;
 hw_timer_t * timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-bool IN,vact,vant = 0,cama = 0,cam,orden = 0;
 
+//Declaracion variables para el filtro
+bool valor_act,valor_ant = 0,cambio_anterior = 0,cambio_actual,orden = 0;
+
+
+//Codigo de la interrupcion TIMER
 void IRAM_ATTR onTimer()
 {
     portENTER_CRITICAL_ISR(&timerMux);
     interruptCounter++;
     portEXIT_CRITICAL_ISR(&timerMux);
     
-    
-    //Filter
+    //Filtro
+    valor_act = digitalRead(4);                       //Leemos valor del pin donde esta  connectado el pulsador
 
-    vact = digitalRead(4);
+    cambio_actual = valor_ant ^ valor_act;            //Funcion XOR de valor anterior y actual
 
-    cam = vant ^ vact;
-
-    if (cam == 1 && cama == 1)
+    if (cambio_actual == 1 && cambio_anterior == 1) //Si ambios cambios estan a nivel alto:
     {
-      IN = digitalRead(18);
-      vant = vact;
-      orden = 1;
-      cama = 0;
-      digitalWrite(18,vact);
-      return;
+      orden = 1;                                      //Ponemos "orden" en valor alto
+      digitalWrite(18,valor_act);                     //Escribimos el valor por el pin 18 para ver cuando se efectua
+                                                      // la pulsacion
+      valor_ant = valor_act;                          //Guardamos el nuevo valor en el valor anterior                                  
+      cambio_anterior = 0;                            //Ponemos el cambio anterior a 0
+      return;                                         //Salimos del timer
     }
-    cama = cam;
+    cambio_anterior = cambio_actual;                  //En caso contrario guardamos el cambio en la variable cambio anterior
 }
 
+//Codigo que solo se ejecuta al inicio
 void setup() 
 {
-    Serial.begin(115200);
-    timer = timerBegin(0, 80, true);
-    timerAttachInterrupt(timer, &onTimer, true);
-    timerAlarmWrite(timer, 10000, true);
+    Serial.begin(115200);                             //Definimos baud rate
+    timer = timerBegin(0, 80, true);                  //Iniciamos el timer
+    timerAttachInterrupt(timer, &onTimer, true);      //Relacionamos el timer a la funcion
+    timerAlarmWrite(timer, 10000, true);              
     timerAlarmEnable(timer);
-    pinMode(18,OUTPUT);
-    pinMode(4,INPUT_PULLUP);
+    pinMode(18,OUTPUT);                               //Definimos el pin 18 como salida
+    pinMode(4,INPUT_PULLUP);                          //Definimos el pin 4 como entrada "pull up"(Necesaria en pulsador)
 }
 
+//Codigo que se ejecuta en bucle
 void loop() 
 {
-    if (interruptCounter > 0)
+    if (interruptCounter > 0)                         //
     {
-        portENTER_CRITICAL(&timerMux);
+        portENTER_CRITICAL(&timerMux);                //
         interruptCounter--;
         portEXIT_CRITICAL(&timerMux);
         totalInterruptCounter++;
-        
-        //Serial.print("An interrupt has occurred. Total number: ");
-        //Serial.println(totalInterruptCounter);
-        if (orden)
+        if (orden)                                    //Codigo que se ejecuta si se recibe la orden
         {
-          Serial.println("boton!");
-          orden = 0;
+          Serial.println("Se ha pulsado en boton!");  //Escribimos mensaje de confirmacion
+          orden = 0;                                  //Una vez ejecutado, reiniciamos la variable
         }
     }
 }
 ```
+
+Como resultado de este codigo, podemos ver que ante los rebotes, el codigo lo lee como una única pulsacion:
+![Filtrado](https://raw.githubusercontent.com/gerardcotsescude/P2-morera-cots.git/images/vlcsnap-2023-03-03-01h30m53s959.png)
