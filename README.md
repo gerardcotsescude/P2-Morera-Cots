@@ -210,4 +210,4 @@ void loop()
 ```
 
 Como resultado de este codigo, podemos ver que ante los rebotes, el codigo lo lee como una única pulsacion:
-![Filtrado](https://raw.githubusercontent.com/gerardcotsescude/P2-morera-cots.git/images/vlcsnap-2023-03-03-01h30m53s959.png)
+![Filtrado](https://github.com/gerardcotsescude/P2-morera-cots.git/blob/main/images/vlcsnap-2023-03-03-01h30m53s959.png?raw=true)
