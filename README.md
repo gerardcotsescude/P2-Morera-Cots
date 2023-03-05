@@ -69,6 +69,26 @@ Button 1 has been pressed 5 times
 Button 1 has been pressed 2606 times
 Interrupt Detached!
 ```
+El **diagrama de flujo** del proceso es:
+
+<div class="mermaid">
+graph TD;
+   A[Inicio del proceso] --> B[Pulsar Botón]
+   B --> C[Interrupcion]
+   C --> D[+1 Contador de Interrupciones]
+   D --> C
+   C --> E[Imprimir nº de veces boton pulsado]
+   E --> F[Comprobar tiempo]
+   F --> |Tiempo>1 min| G[Desconnectar Interrupción ]
+   G -->  H[Imprimir Interrupt Detached! ]
+   H--> A
+   B--> |Si interrupción desconectada| A
+   F --> |Tiempo<1 min| A
+    
+    
+</div>
+
+
 
 ( Debido a que el en laboratorio no disponiamos de pulsadores, hemos simulado el puslador usando un cortocircuito, con lo cual aparecen rebotes, disparando el numero de veces que se presiona el pulsador. )
 
@@ -131,6 +151,18 @@ An interrupt has occurred. Total number: 8
 An interrupt has occurred. Total number: 9
 ...
 ```
+El **diagrama de flujo** del proceso es els siguiente:
+
+<div class="mermaid">
+graph TD;
+   A[Inicio del proceso] --> |Contador<1000000ms| A
+   A --> |Timer>1000000ms|B[Interrupción]
+   B --> C[+ Número de interrupcion]
+   C --> B
+   B --> D[Imprimir numero de interrupción]
+   D --> A
+   
+</div>
 
 ## Extra: Filtrado pulsador
 
