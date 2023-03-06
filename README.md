@@ -69,28 +69,25 @@ Button 1 has been pressed 5 times
 Button 1 has been pressed 2606 times
 Interrupt Detached!
 ```
+
+( Debido a que el en laboratorio no disponiamos de pulsadores, hemos simulado el puslador usando un cortocircuito, con lo cual aparecen rebotes, disparando el numero de veces que se presiona el pulsador. )
+
 El **diagrama de flujo** del proceso es:
 
 <div class="mermaid">
 graph TD;
-   A[Inicio del proceso] --> B[Pulsar Botón]
-   B --> C[Interrupcion]
-   C --> D[+1 Contador de Interrupciones]
-   D --> C
-   C --> E[Imprimir nº de veces boton pulsado]
-   E --> F[Comprobar tiempo]
-   F --> |Tiempo>1 min| G[Desconnectar Interrupción ]
-   G -->  H[Imprimir Interrupt Detached! ]
-   H--> A
-   B--> |Si interrupción desconectada| A
-   F --> |Tiempo<1 min| A
-    
-    
+   A[Inicio del programa] --> |Si valor de pulsador en flanco de bajada|C
+   A --> B
+   B[Programa principal] --> |Si boton pulsado|D
+   B --> |Si ha pasado 1 minuto|G
+   C[Interrupción] --> E
+   D[Imprimir número de pulsaciones] --> F
+   F[Indicador de pulsación a 0] --> B
+   G[Desconnectar interrupción] --> H
+   H[Imprimir desconnexión interrupción] --> A
+   E[Aumentar número de pulsaciones] --> J
+   J[Indicador de pulsación a 1] --> A   
 </div>
-
-
-
-( Debido a que el en laboratorio no disponiamos de pulsadores, hemos simulado el puslador usando un cortocircuito, con lo cual aparecen rebotes, disparando el numero de veces que se presiona el pulsador. )
 
 ## Interrupción por Timer
 
@@ -155,12 +152,14 @@ El **diagrama de flujo** del proceso es els siguiente:
 
 <div class="mermaid">
 graph TD;
-   A[Inicio del proceso] --> |Contador<1000000ms| A
-   A --> |Timer>1000000ms|B[Interrupción]
-   B --> C[+ Número de interrupcion]
-   C --> B
-   B --> D[Imprimir numero de interrupción]
-   D --> A
+   A[Inicio del programa] --> |1000 ms|B
+   A --> C
+   C[Programa principal] --> |Si contador de interrupción mayor a 0|D
+   B[Interrupción por timer] --> G
+   G[Contador de interrupción ++] --> A
+   D[Contador de interrupción --] --> E
+   E[Número total de interrupciones ++] --> F
+   F[Imprimir número total de interrupciones] --> A
    
 </div>
 
@@ -244,3 +243,25 @@ void loop()
 Como resultado de este codigo, podemos ver que ante los rebotes, el codigo lo lee como una única pulsacion:
 
 ![Filtrado](https://github.com/gerardcotsescude/P2-morera-cots/blob/main/vlcsnap-2023-03-03-01h30m53s959.png)
+
+El **diagrama de flujo** del proceso es:
+
+<div class="mermaid">
+graph TD;
+   A[Inicio del programa] --> B
+   B[Programa principal] --> C
+   C[Aumento del TIMER] --> |Si orden|D
+   C --> |Si no orden|A
+   D[Ejecutar orden] --> E
+   E[Print de pulsación de boton] --> F
+   F[Orden a valor bajo] --> A
+   A --> |Si interrupcion por Timer|G
+   G[Lectura valor del pulsador] --> H
+   H[Definición de cambio como la operacion XOR de valor actual y anterior] --> |Si cambio actual y anterior igual a 1|I
+   H --> |Si cambio actual y anterior diferente a 1|M
+   I[Orden a valor alto] --> K
+   K[Valor anterior igual a valor actual] --> L
+   L[Cambio anterior igual a 0] --> A
+   M[Cambio anterior igual a cambio actual] --> A
+
+   </div>
